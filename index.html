@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Staff Hub</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #4f46e5;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #e2e8f0;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #eab308;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+
+        .add-employee-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-employee-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            transform: translateY(-20px);
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .employee-card {
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .employee-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-training {
+            background: var(--warning);
+            color: var(--background);
+        }
+
+        .status-active {
+            background: var(--success);
+            color: var(--background);
+        }
+
+        .employee-info {
+            margin-top: 1rem;
+        }
+
+        .employee-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item i {
+            color: var(--primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-group input.error,
+        .form-group select.error {
+            border: 1px solid var(--danger);
+        }
+
+        .form-group input.valid,
+        .form-group select.valid {
+            border: 1px solid var(--success);
+        }
+
+        /* Custom date picker styling */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Modern Staff Hub</h1>
+            <button class="add-employee-btn" onclick="openModal()">
+                <i class="fas fa-plus"></i> Add Employee
+            </button>
+        </header>
+
+        <div class="employee-grid" id="employeeGrid"></div>
+
+        <div class="modal" id="employeeModal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeModal()">×</button>
+                <h2 id="modalTitle">Add New Employee</h2>
+                <form id="employeeForm" class="form-grid" novalidate>
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" required>
+                        <span class="error-message" id="nameError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="empId">Employee ID</label>
+                        <input type="text" id="empId" required>
+                        <span class="error-message" id="empIdError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Company Email</label>
+                        <input type="email" id="email" required>
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <input type="text" id="role" required>
+                        <span class="error-message" id="roleError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="joiningDate">Joining Date</label>
+                        <input type="date" id="joiningDate" required>
+                        <span class="error-message" id="joiningDateError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="training">Training Status</label>
+                        <select id="training" required>
+                            <option value="ongoing">Ongoing</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectStatus">Project Status</label>
+                        <select id="projectStatus" required>
+                            <option value="on-bench">On Bench</option>
+                            <option value="in-project">In Project</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectName">Project Name</label>
+                        <input type="text" id="projectName">
+                        <span class="error-message" id="projectNameError"></span>
+                    </div>
+                    <button type="submit" class="add-employee-btn" style="grid-column: span 2;">
+                        Save Employee
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+  let employees = [];
+let editingIndex = -1;
+let originalEmpId = ''; 
+
+// Validation functions
+function validateName(name) {
+    
+    if (name.trim() === '') return false;
+    const isValidFormat = /^[A-Za-z]+(?: [A-Za-z]+)*$/.test(name);
+    const alphabetCount = name.replace(/[^a-zA-Z]/g, '').length;
+    return isValidFormat && alphabetCount >= 5;
+}
+
+function validateRole(role) {
+  
+    if (role.trim() === '') return false;
+    const isValidFormat = /^[A-Za-z]+(?: [A-Za-z]+)*$/.test(role);
+    const alphabetCount = role.replace(/[^a-zA-Z]/g, '').length;
+    return isValidFormat && alphabetCount >= 3;
+}
+
+function validateProjectName(projectName) {
+    if (!projectName || projectName.trim() === '') return false;
+   
+    const isValidFormat = /^[A-Za-z]+(?: [A-Za-z]+)*$/.test(projectName);
+    const alphabetCount = projectName.replace(/[^a-zA-Z]/g, '').length;
+    return isValidFormat && alphabetCount >= 5;
+}
+
+function validateEmployeeId(empId, checkDuplicate = true) {
+    
+    if (empId.length !== 7) return false;
+    if (!empId.startsWith('ATS0')) return false;
+    
+    
+    const lastThreeDigits = empId.substring(4);
+    
+   
+    if (!/^\d{3}$/.test(lastThreeDigits)) return false;
+    
+   
+    if (lastThreeDigits === '000') return false;
+    
+  
+    if (checkDuplicate) {
+        
+        for (let i = 0; i < employees.length; i++) {
+            if (editingIndex !== i && employees[i].empId === empId) {
+                return false; 
+            }
+        }
+    }
+    
+    return true;
+}
+
+function validateEmail(email) {
+ 
+    if (email.trim() === '' || email.includes(' ')) return false;
+    return email.endsWith('@astrolitetech.com');
+}
+
+function validateDate(dateStr) {
+    if (!dateStr) return false;
+    
+    const selectedDate = new Date(dateStr);
+    const today = new Date();
+    
+  
+    selectedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    
+    if (selectedDate > today) return false;
+    
+  
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    threeMonthsAgo.setHours(0, 0, 0, 0);
+    
+  
+    if (selectedDate < threeMonthsAgo) return false;
+    
+    return true;
+}
+
+
+function showError(inputId, message) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(inputId + 'Error');
+    input.classList.add('error');
+    input.classList.remove('valid');
+    error.textContent = message;
+    error.style.display = 'block';
+}
+
+function showSuccess(inputId) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(inputId + 'Error');
+    input.classList.remove('error');
+    input.classList.add('valid');
+    error.style.display = 'none';
+}
+
+function clearValidation(inputId) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(inputId + 'Error');
+    input.classList.remove('error', 'valid');
+    error.style.display = 'none';
+}
+
+
+function validateForm() {
+    let isValid = true;
+
+    const name = document.getElementById('name').value.trim();
+    if (!validateName(name)) {
+        showError('name', 'Name must contain only letters with spaces between words, with at least 5 letters');
+        isValid = false;
+    } else {
+        showSuccess('name');
+    }
+
+    const empId = document.getElementById('empId').value.trim();
+    if (!validateEmployeeId(empId)) {
+        if (!validateEmployeeId(empId, false)) {
+            showError('empId', 'Employee ID must be in format ATS0XXX where X are digits and not all zeros');
+        } else {
+            showError('empId', 'Employee ID already exists. Please use a different ID.');
+        }
+        isValid = false;
+    } else {
+        showSuccess('empId');
+    }
+
+    const email = document.getElementById('email').value.trim();
+    if (!validateEmail(email)) {
+        showError('email', 'Email must end with @astrolitetech.com and contain no spaces');
+        isValid = false;
+    } else {
+        showSuccess('email');
+    }
+
+    const role = document.getElementById('role').value.trim();
+    if (!validateRole(role)) {
+        showError('role', 'Role must contain only letters with spaces between words, with at least 3 letters');
+        isValid = false;
+    } else {
+        showSuccess('role');
+    }
+
+    const date = document.getElementById('joiningDate').value;
+    if (!validateDate(date)) {
+        showError('joiningDate', 'Joining date must be within the last 3 months and not in the future');
+        isValid = false;
+    } else {
+        showSuccess('joiningDate');
+    }
+
+    const projectStatus = document.getElementById('projectStatus').value;
+    if (projectStatus === 'in-project') {
+        const projectName = document.getElementById('projectName').value.trim();
+        if (!validateProjectName(projectName)) {
+            showError('projectName', 'Project name must contain only letters with spaces between words and at least 5 letters');
+            isValid = false;
+        } else {
+            showSuccess('projectName');
+        }
+    }
+
+    return isValid;
+}
+
+
+function openModal() {
+    document.getElementById('employeeModal').classList.add('active');
+    document.getElementById('modalTitle').textContent = 'Add New Employee';
+    setupDatepickerRestrictions();
+}
+
+function closeModal() {
+    document.getElementById('employeeModal').classList.remove('active');
+    document.getElementById('employeeForm').reset();
+    ['name', 'empId', 'email', 'role', 'joiningDate', 'projectName'].forEach(clearValidation);
+    editingIndex = -1;
+    originalEmpId = '';
+}
+
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    
+    if (isError) {
+        toast.classList.add('error');
+    } else {
+        toast.classList.remove('error');
+    }
+    
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+
+function formatDisplayDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+}
+
+
+function updateEmployeeGrid() {
+    const grid = document.getElementById('employeeGrid');
+    grid.innerHTML = '';
+
+    employees.forEach((employee, index) => {
+        const card = document.createElement('div');
+        card.className = 'employee-card';
+        card.innerHTML = `
+            <span class="employee-status ${employee.training === 'ongoing' ? 'status-training' : 'status-active'}">
+                ${employee.training === 'ongoing' ? 'In Training' : 'Active'}
+            </span>
+            <div class="employee-info">
+                <h3 class="employee-name">${employee.name}</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <i class="fas fa-id-badge"></i>
+                        <span>${employee.empId}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>${employee.email}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>${employee.role}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>${formatDisplayDate(employee.joiningDate)}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>${employee.projectStatus === 'in-project' ? 'In Project' : 'On Bench'}${employee.projectName ? ` - ${employee.projectName}` : ''}</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn edit-btn" onclick="editEmployee(${index})">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteEmployee(${index})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+
+function setupDatepickerRestrictions() {
+    const dateInput = document.getElementById('joiningDate');
+    const today = new Date();
+    
+    
+    const maxDate = today.toISOString().split('T')[0];
+    dateInput.setAttribute('max', maxDate);
+    
+    
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    const minDate = threeMonthsAgo.toISOString().split('T')[0];
+    dateInput.setAttribute('min', minDate);
+    
+   
+}
+
+
+function editEmployee(index) {
+    editingIndex = index;
+    const employee = employees[index];
+    originalEmpId = employee.empId; // Store the original ID
+    
+    document.getElementById('modalTitle').textContent = 'Edit Employee';
+    document.getElementById('name').value = employee.name;
+    document.getElementById('empId').value = employee.empId;
+    document.getElementById('email').value = employee.email;
+    document.getElementById('role').value = employee.role;
+    
+   
+    document.getElementById('joiningDate').value = employee.joiningDate;
+    
+    document.getElementById('training').value = employee.training;
+    document.getElementById('projectStatus').value = employee.projectStatus;
+    document.getElementById('projectName').value = employee.projectName || '';
+    
+    // Show/hide project name field based on project status
+    const projectNameContainer = document.getElementById('projectName').parentElement;
+    if (employee.projectStatus === 'in-project') {
+        projectNameContainer.style.display = 'block';
+    } else {
+        projectNameContainer.style.display = 'none';
+    }
+    
+    setupDatepickerRestrictions();
+    openModal();
+}
+
+function deleteEmployee(index) {
+    if (confirm('Are you sure you want to delete this employee?')) {
+        employees.splice(index, 1);
+        updateEmployeeGrid();
+        showToast('Employee deleted successfully!');
+    }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup date picker restrictions on initial load
+    setupDatepickerRestrictions();
+    
+    // Form submission
+    document.getElementById('employeeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        const employee = {
+            name: document.getElementById('name').value.trim(),
+            empId: document.getElementById('empId').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            role: document.getElementById('role').value.trim(),
+            joiningDate: document.getElementById('joiningDate').value,
+            training: document.getElementById('training').value,
+            projectStatus: document.getElementById('projectStatus').value,
+            projectName: document.getElementById('projectStatus').value === 'in-project' ? document.getElementById('projectName').value.trim() : ''
+        };
+
+        if (editingIndex === -1) {
+            employees.push(employee);
+            showToast('Employee added successfully!');
+        } else {
+            employees[editingIndex] = employee;
+            editingIndex = -1;
+            originalEmpId = '';
+            showToast('Employee updated successfully!');
+        }
+
+        updateEmployeeGrid();
+        closeModal();
+    });
+
+    // Project status change handler
+    document.getElementById('projectStatus').addEventListener('change', function() {
+        const projectNameInput = document.getElementById('projectName');
+        const projectNameContainer = projectNameInput.parentElement;
+        
+        if (this.value === 'in-project') {
+            projectNameContainer.style.display = 'block';
+            projectNameInput.required = true;
+            
+            // Validate project name immediately if there's a value
+            if (projectNameInput.value.trim()) {
+                if (validateProjectName(projectNameInput.value.trim())) {
+                    showSuccess('projectName');
+                } else {
+                    showError('projectName', 'Project name must contain only letters with spaces between words and at least 5 letters');
+                }
+            } else {
+                showError('projectName', 'Project name is required when status is In Project');
+            }
+        } else {
+            projectNameContainer.style.display = 'none';
+            projectNameInput.required = false;
+            projectNameInput.value = '';
+            clearValidation('projectName');
+        }
+    });
+
+    // Employee ID validation - check for duplicates on input
+    document.getElementById('empId').addEventListener('input', function() {
+        const value = this.value.trim();
+        
+        // Limit length
+        if (value.length > 7) {
+            this.value = value.slice(0, 7);
+            return;
+        }
+        
+        // Skip validation if field is empty
+        if (!value) {
+            clearValidation('empId');
+            return;
+        }
+        
+        // First check if format is valid
+        if (!validateEmployeeId(value, false)) {
+            showError('empId', 'Employee ID must be in format ATS0XXX where X are digits and not all zeros');
+            return;
+        }
+        
+        // If editing, and ID hasn't changed, it's valid
+        if (editingIndex !== -1 && value === originalEmpId) {
+            showSuccess('empId');
+            return;
+        }
+        
+        // Check for duplicate IDs
+        for (let i = 0; i < employees.length; i++) {
+            if (editingIndex !== i && employees[i].empId === value) {
+                showError('empId', 'Employee ID already exists. Please use a different ID.');
+                return;
+            }
+        }
+        
+        showSuccess('empId');
+    });
+
+    // Real-time validation listeners for other fields
+    const inputs = ['name', 'email', 'role', 'joiningDate', 'projectName'];
+    inputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        
+        input.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (!value && inputId !== 'joiningDate') {
+                if (inputId === 'projectName' && document.getElementById('projectStatus').value === 'in-project') {
+                    showError(inputId, 'Project name is required when status is In Project');
+                } else {
+                    clearValidation(inputId);
+                }
+                return;
+            }
+
+            switch(inputId) {
+                case 'name':
+                    if (validateName(value)) {
+                        showSuccess(inputId);
+                    } else {
+                        showError(inputId, 'Name must contain only letters with spaces between words, with at least 5 letters');
+                    }
+                    break;
+                case 'email':
+                    if (validateEmail(value)) {
+                        showSuccess(inputId);
+                    } else {
+                        showError(inputId, 'Email must end with @astrolitetech.com and contain no spaces');
+                    }
+                    break;
+                case 'role':
+                    if (validateRole(value)) {
+                        showSuccess(inputId);
+                    } else {
+                        showError(inputId, 'Role must contain only letters with spaces between words, with at least 3 letters');
+                    }
+                    break;
+                case 'joiningDate':
+                    if (validateDate(value)) {
+                        showSuccess(inputId);
+                    } else {
+                        showError(inputId, 'Joining date must be within the last 3 months and not in the future');
+                    }
+                    break;
+                case 'projectName':
+                    if (document.getElementById('projectStatus').value === 'in-project') {
+                        if (validateProjectName(value)) {
+                            showSuccess(inputId);
+                        } else {
+                            showError(inputId, 'Project name must contain only letters with spaces between words and at least 5 letters');
+                        }
+                    }
+                    break;
+            }
+        });
+    });
+
+    // Prevent entry of spaces at the beginning of fields
+    inputs.forEach(inputId => {
+        if (inputId !== 'joiningDate') {
+            const input = document.getElementById(inputId);
+            
+            input.addEventListener('keydown', function(e) {
+                // If the input is empty and the key pressed is space, prevent it
+                if (this.value === '' && e.key === ' ') {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+});
+    </script>
+</body>
+</html>
